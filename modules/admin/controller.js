@@ -69,7 +69,7 @@ router.post("/login", (req, res) => {
             } else {
                 console.log(data);
                 let obj = { username: data.username, email: data.email, role: data.role };
-                let token = jwt.sign(obj, process.env.secrateKey, {
+                let token = jwt.sign(obj, process.env.SECRET_KEY, {
                     expiresIn: 1800 // expires in 30 minuit
                 });
 
