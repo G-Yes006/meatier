@@ -8,7 +8,6 @@ const controller = require("./modules");
 
 const app = express();
 const cpus = os.cpus().length;
-const port = process.env.PORT;
 
 mongoose
   .connect(
@@ -32,7 +31,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(controller);
+app.use('/', (req,res) => {
+  res.json({message: 'Home Route'});
+});
 
-app.listen(port, () => {
-  console.log("Server is running on port no " + port);
+app.listen(process.env.PORT, () => {
+  console.log("Server is running on port no " + process.env.PORT);
 });
