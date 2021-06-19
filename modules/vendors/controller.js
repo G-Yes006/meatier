@@ -7,7 +7,6 @@ const email = require('../../middleware/email');
 const uploadMiddleware = require('../../middleware/uploadImage');
 
 const router = express.Router();
-
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage });
 
@@ -99,6 +98,7 @@ router.post("/signup", userMiddleware.checkExestingUser, (req, res) => {
     });
 });
 
+
 router.put("/addUsername/:id", userMiddleware.checkExestingUsername, (req, res) => {
     let id = req.params.id;
     User.Auth.findOneAndUpdate({ _id: id }, { username: req.body.username }, (err, data) => {
@@ -157,6 +157,37 @@ router.post('/changePassword', (req, res) => {
         } else {
             if (user == null) {
                 res.status(404).send("User id not found");
+            } else {
+                User.Auth.findOneAndUpdate({ _id: userId }, { password: password }, (err, data) => {
+                    if (err) {
+                        res.send(err);
+                    } else {
+                        res.send("Password updated succesfully");
+                    }
+                });
+            }
+        }
+    });
+});
+
+//Update Password
+router.put('/updatePassword', (req, res) => {
+    const userId = req.body.id;
+    const password = req.body.password;
+    const confirmPassword = req.body.confirmpassword;
+
+    User.Auth.findById(userId, (err, user) => {
+        if (err) {
+            res.json({
+                error: err,
+                message: "Id is not correct"
+            });
+        } else {
+            if (user == null) {
+                res.status(404).send("User id not found"); 
+            } 
+            if (password !== confirmPassword) {
+                res.status(404).send("Password didn't Matched");
             } else {
                 User.Auth.findOneAndUpdate({ _id: userId }, { password: password }, (err, data) => {
                     if (err) {
