@@ -18,9 +18,10 @@ const vendor = {
     updatedDate: Date,
     status: { type: Boolean, default: 1 }
 };
+
 const vendorSchema = new Schema(vendor, { versionKey: false });
 
-userSchema.pre('save', function (next) {
+vendorSchema.pre('save', function (next) {
     const currentDate = new Date();
     this.updatedDate = currentDate;
     if (!this.createdDate) {
