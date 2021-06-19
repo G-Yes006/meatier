@@ -1,10 +1,9 @@
 const express = require('express');
 const jwt = require("jsonwebtoken");
 const multer = require('multer');
-
-const Admin = require('./models');
-const email = require('../../middleware/email');
+const User = require('./models');
 const userMiddleware = require('../../middleware/user');
+const email = require('../../middleware/email');
 const uploadMiddleware = require('../../middleware/uploadImage');
 
 const router = express.Router();
@@ -12,25 +11,10 @@ const router = express.Router();
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage });
 
-
-
-// {
-//     "fname": "Admin",
-//     "lname": "Admin",
-//      "role": "Admin",
-//     "username": "admin",
-//     "password": "admin@123",
-//     "email": "admin@gmail.com",
-//     "countryCode": 91,
-//     "phone": 9845098450,
-//     "org": "meatier"
-  
-// }
-
-// This is Only for Admin User
+// Get All User Information. This is Only for Admin User
 router.get("/info/:id", (req, res) => {
     const id = req.params.id;
-    Admin.Auth.findById(id, (err, data) => {
+    User.Auth.findById(id, (err, data) => {
         if (err) {
             res.send(err);
         } else {
@@ -49,25 +33,20 @@ router.get("/info/:id", (req, res) => {
         }
     });
 });
-/**
 
- */
+
 router.post("/login", (req, res) => {
-    let obj = {};
-    obj.email = req.body.email;
-    obj.password = req.body.password;
+    let obj = req.body;
     // obj.password = jwt.sign(obj.password, 'ssshhhhh');
     obj.status = true;
-    obj.role = 'Admin';
-
-    Admin.Auth.findOne(obj, (err, data) => {
+    User.Auth.findOne(obj, (err, data) => {
         if (err) {
             res.send(err);
         } else {
             if (data == null) {
                 res.status(401).json({ error: "Username & password is not Valid" });
             } else {
-                console.log(data);
+                console.log("Success");
                 let obj = { username: data.username, email: data.email, role: data.role };
                 let token = jwt.sign(obj, process.env.SECRET_KEY, {
                     expiresIn: 1800 // expires in 30 minuit
@@ -83,45 +62,74 @@ router.post("/login", (req, res) => {
             }
         }
     });
-})
+});
 
 
-// Create New User 
 
-router.post("/signup", userMiddleware.checkExestingAdmin, (req, res) => {
-    let obj = req.body;
-    let model = new Admin.Auth(obj);
+router.post("/signup", userMiddleware.checkExestingUser, (req, res) => {
+    let model = new User.Auth(req.body);
     // model.password = jwt.sign(obj.password, 'shhhhh');
     model.save((err, user) => {
         if (err) {
             res.send(err.message);
         } else {
-            // let decoded = jwt.verify(user.password, 'shhhhh');
-            let obj = { username: user.username, email: user.email, role: user.role };
-            let token = jwt.sign(obj, process.env.SECRET_KEY, {
-                expiresIn: 1800 // expires in 30 minuit
-            });
+            const securityCode = userMiddleware.generateSecurityCode();
+            User.Auth.findOneAndUpdate({ _id: user._id }, { securityCode: securityCode }, (err, data) => {
+                if (err) {
+                    res.send(err);
+                } else {
+                    if ('email' in user) {
+                        console.log('Email');
+                        res.json(securityCode);
+                        // email(userId, password, to, 'Security Code', securityCode, securityCode).then(data => {
+                        //     res.send(data);
+                        // }, err => {
+                        //     console.log(err);
+                        //     res.send(err);
+                        // });
+                    } else if ('phone' in user) {
+                        console.log('Phone');
+                        res.json(securityCode);
+                    } else {
+                        res.json(securityCode);
+                    }
+                }
+            })
+        }
+    });
+});
 
-            res.json({
-                id: user._id,
-                username: user.username,
-                fname: user.fname,
-                role: user.role,
-                token: token
-            });
+router.put("/addUsername/:id", userMiddleware.checkExestingUsername, (req, res) => {
+    let id = req.params.id;
+    User.Auth.findOneAndUpdate({ _id: id }, { username: req.body.username }, (err, data) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.json(data);
+        }
+    });
+});
+
+router.put("/addUserInfo/:id", (req, res) => {
+    let id = req.params.id;
+    User.Auth.findOneAndUpdate({ _id: id }, req.body, (err, data) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.json(data);
         }
     });
 });
 
 router.post("/forgotPassword", (req, res) => {
-    Admin.Auth.findOne(req.body, (err, user) => {
+    User.Auth.findOne(req.body, (err, user) => {
         if (err) {
             res.send(err);
         } else {
             if (!user) {
                 res.status(404).send("No User Found");
             } else {
-                const url = 'localhost:3000/admin/forgotpassword?id=' + user.id;
+                const url = 'localhost:3000/user/forgotpassword?id=' + user.id;
                 const resetUrlText = "Reset url is <a href='" + url + "'>" + url + "</a>";
                 const resetUrlTemplate = "Reset url is <a href='" + url + "'>" + url + "</a>";
 
@@ -136,11 +144,11 @@ router.post("/forgotPassword", (req, res) => {
 });
 
 //Change Password
-router.post('/changePassword', async (req, res) => {
-    const id = req.body.id;
-    const pass = req.body.password;
+router.post('/changePassword', (req, res) => {
+    const userId = req.body.id;
+    const password = req.body.password;
 
-    Admin.Auth.findById(id, (err, user) => {
+    User.Auth.findById(userId, (err, user) => {
         if (err) {
             res.json({
                 error: err,
@@ -148,9 +156,9 @@ router.post('/changePassword', async (req, res) => {
             });
         } else {
             if (user == null) {
-                res.status(404).send("No User Found");
+                res.status(404).send("User id not found");
             } else {
-                Admin.Auth.findOneAndUpdate({ _id: id }, { password: pass }, (err, data) => {
+                User.Auth.findOneAndUpdate({ _id: userId }, { password: password }, (err, data) => {
                     if (err) {
                         res.send(err);
                     } else {
@@ -167,7 +175,7 @@ router.post('/changePassword', async (req, res) => {
 router.put("/activeDeactivateUser/:id", (req, res) => {
     let id = req.params.id;
     let status = req.body;
-    Admin.Auth.findById(id, (err, user) => {
+    User.Auth.findById(id, (err, user) => {
         if (err) {
             res.json({
                 error: err,
@@ -177,7 +185,7 @@ router.put("/activeDeactivateUser/:id", (req, res) => {
             if (user == null) {
                 res.status(404).send("User id not found");
             } else {
-                Admin.Auth.findOneAndUpdate({ _id: id }, status, (err, data) => {
+                User.Auth.findOneAndUpdate({ _id: id }, status, (err, data) => {
                     if (err) {
                         res.send(err);
                     } else {
@@ -208,7 +216,7 @@ router.get("/generateVarificationCode/:type/:id", userMiddleware.getUserInfo, (r
     const securityCode = userMiddleware.generateSecurityCode();
     const securityCodeText = "Varification Code is " + securityCode;
     const securityCodeTemplate = "<h1>Email varification code is " + securityCode + "</h1>";
-    Admin.Auth.findOneAndUpdate({ _id: id }, { securityCode: securityCode }, (err, data) => {
+    User.Auth.findOneAndUpdate({ _id: id }, { securityCode: securityCode }, (err, user) => {
         if (err) {
             res.send(err);
         } else {
@@ -239,46 +247,45 @@ router.put("/varification/:type/:id", (req, res) => {
         obj.phoneVerified = 1;
     }
 
-    Admin.Auth.findById(id, { securityCode: 1 }, (err, code) => {
+    User.Auth.findById(id, { securityCode: 1 }, (err, code) => {
         if (err) {
             res.send(err);
         } else {
             if (code.securityCode == securityCode) {
-                Admin.Auth.findOneAndUpdate({ _id: id }, obj, (err, data) => {
+                User.Auth.findByIdAndUpdate(id, obj, (err, data) => {
                     if (err) {
                         res.send(err);
                     } else {
-                        res.send(`Admin's ${type} has varified`);
+                        res.send(`Users ${type} has varified`);
                     }
                 });
             } else {
-                res.send(`Admin's ${type} has not varified. Because you have entered wrong Security Code`);
+                res.send(`Users ${type} has not varified. Because you have entered wrong Security Code`);
             }
         }
     });
 });
 
-
 /**
- * Insert Admin Details
+ * Insert User Details
  *  */
-// Insert Logged in Admin Details
+// Insert Logged in User Details
 router.post("/insertUserDetails", (req, res) => {
     let obj = req.body;
-    let model = new Admin.Details(obj);
+    let model = new User.Details(obj);
     model.save((err, user) => {
         if (err) {
             res.send(err);
         } else {
-            res.send('Admin data inserted');
+            res.send('User Data Inserted');
         }
     })
 });
 
-// Get Logged in Admin Details
+// Get Logged in User Details
 router.get("/userDetails/:id", (req, res) => {
     let id = req.params.id;
-    Admin.Details.findOne({ userId: id }, (err, data) => {
+    User.Details.findOne({ userId: id }, (err, data) => {
         if (err) {
             res.send(err);
         } else {
@@ -287,12 +294,29 @@ router.get("/userDetails/:id", (req, res) => {
     });
 });
 
+
+/**
+ * Insert User Group
+ *  */
+// Insert Logged in User Group
+router.post("/addUserGroup", (req, res) => {
+    let obj = req.body;
+    let model = new User.Details(obj);
+    model.save((err, user) => {
+        if (err) {
+            res.send(err);
+        } else {
+            res.send('User Data Inserted');
+        }
+    })
+});
+
 router.post('/uploadProfilePics/:id', upload.single("profile"), uploadMiddleware.uploadImage, (req, res) => {
     let obj = {
-        userId: req.body.id,
+        userId: req.params.id,
         profilePics: req.file.originalname
     }
-    let model = new Admin.ProfilePics(obj);
+    let model = new user.ProfilePics(obj);
     model.save((err, profile) => {
         if (err) {
             res.send(err);
