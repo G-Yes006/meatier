@@ -48,7 +48,7 @@ router.post("/login", (req, res) => {
                 console.log("Success");
                 let obj = { username: data.username, email: data.email, role: data.role };
                 let token = jwt.sign(obj, process.env.SECRET_KEY, {
-                    expiresIn: 1800 // expires in 30 minuit
+                    expiresIn: 1800 // expires in 30 minuites
                 });
 
                 res.json({
@@ -98,17 +98,6 @@ router.post("/signup", userMiddleware.checkExestingUser, (req, res) => {
     });
 });
 
-
-router.put("/addUsername/:id", userMiddleware.checkExestingUsername, (req, res) => {
-    let id = req.params.id;
-    User.Auth.findOneAndUpdate({ _id: id }, { username: req.body.username }, (err, data) => {
-        if (err) {
-            res.send(err);
-        } else {
-            res.json(data);
-        }
-    });
-});
 
 router.put("/addUserInfo/:id", (req, res) => {
     let id = req.params.id;

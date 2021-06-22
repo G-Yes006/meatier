@@ -32,7 +32,7 @@ vendorSchema.pre('save', function (next) {
 });
 
 
-// User Details
+// Vendor Details
 const vendorDetails = {
     _id: { type: objectId, auto: true },
     userId: { type: objectId, required: true },
@@ -57,7 +57,7 @@ vendorDetailsSchema.pre('save', function (next) {
     next();
 });
 
-// User Profile Pics
+// Vendor Profile Pics
 const vendorProfilePics = {
     _id: { type: objectId, auto: true },
     userId: { type: objectId, required: true },

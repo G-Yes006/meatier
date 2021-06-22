@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const multer = require('multer');
 
 const Admin = require('./models');
+const Vendor = require('../vendors/models')
 const email = require('../../middleware/email');
 const userMiddleware = require('../../middleware/user');
 const uploadMiddleware = require('../../middleware/uploadImage');
@@ -166,8 +167,8 @@ router.post('/changePassword', async (req, res) => {
 // Active Previous Deactivated User. & Deactivate Active User.
 router.put("/activeDeactivateUser/:id", (req, res) => {
     let id = req.params.id;
-    let status = req.body;
-    Admin.Auth.findById(id, (err, user) => {
+    let status = req.body; 
+    Vendor.Auth.findById(id, (err, user) => {
         if (err) {
             res.json({
                 error: err,
@@ -177,7 +178,7 @@ router.put("/activeDeactivateUser/:id", (req, res) => {
             if (user == null) {
                 res.status(404).send("User id not found");
             } else {
-                Admin.Auth.findOneAndUpdate({ _id: id }, status, (err, data) => {
+                Vendor.Auth.findOneAndUpdate({ _id: id }, status, (err, data) => {
                     if (err) {
                         res.send(err);
                     } else {
@@ -186,11 +187,18 @@ router.put("/activeDeactivateUser/:id", (req, res) => {
                                 status: 'succes',
                                 data: "User is Deactivated",
                             });
-                        }
-                        res.status(200).json({
-                            status: 'succes',
-                            data: "User is Activated",
-                        });
+                        } {
+
+                            email(user.email, 
+                                'Login Details',
+                                "<h1>Your Login Credentials are email: " + user.email + " password is: "+ user.password + "</h1>", 
+                                "Thank for your Registration"
+                                ).then(data => {
+                                    res.send(data);
+                                }, err => {
+                                    res.send(err);
+                                });
+                            }
                     }
                 });
             }
