@@ -1,5 +1,5 @@
 {
-  "name": "artcurate-admin-backend",
+  "name": "meatier",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -12,14 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/TechtoLogicsDevelop/artcurate-admin-backend.git"
+    "url": "git+ssh://git@github.com/TechtoLogicsDevelop/meatier.git"
   },
   "author": "Swarup Saha",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/TechtoLogicsDevelop/artcurate-admin-backend/issues"
+    "url": "https://github.com/TechtoLogicsDevelop/meatier/issues"
   },
-  "homepage": "https://github.com/TechtoLogicsDevelop/artcurate-admin-backend#readme",
+  "homepage": "https://github.com/TechtoLogicsDevelop/meatier#readme",
   "dependencies": {
     "aws-sdk": "^2.918.0",
     "cors": "^2.8.5",

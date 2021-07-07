@@ -16,14 +16,13 @@ router.post("/addToCart", async (req, res) => {
         message: "Invalid request",
       });
     }
-    //--If Cart Exists ----
+    //If Cart Exists 
     if (cart) {
-      //---- Check if index exists ----
+      // Check if index exists 
       const indexFound = cart.items.findIndex(
         (item) => item.productId.id == productId
       );
 
-      //------This removes an item from the the cart if the quantity is set to zero, We can use this method to remove an item from the list  -------
       if (indexFound !== -1 && quantity <= 0) {
         cart.items.splice(indexFound, 1);
         if (cart.items.length == 0) {
@@ -35,7 +34,7 @@ router.post("/addToCart", async (req, res) => {
         }
       }
 
-      //----------Check if product exist, just add the previous quantity with the new quantity and update the total price-------
+      //Check if product exist
       else if (indexFound !== -1) {
         cart.items[indexFound].quantity =
           cart.items[indexFound].quantity + quantity;
@@ -47,7 +46,7 @@ router.post("/addToCart", async (req, res) => {
           .reduce((acc, next) => acc + next);
       }
 
-      //----Check if quantity is greater than 0 then add item to items array ----
+      //Check if quantity is greater than 0 then add item to items array 
       else if (quantity > 0) {
         cart.items.push({
           productId: productId,
@@ -59,7 +58,7 @@ router.post("/addToCart", async (req, res) => {
           .map((item) => item.total)
           .reduce((acc, next) => acc + next);
       }
-      //----If quantity of price is 0 throw the error -------
+      //If quantity of price is 0 throw the error
       else {
         return res.status(400).json({
           type: "Invalid",
@@ -74,7 +73,7 @@ router.post("/addToCart", async (req, res) => {
       });
     }
 
-    //------------ This creates a new cart and then adds the item to the cart that has been created------------
+    // This creates a new cart 
     else {
       const cartData = {
         items: [
@@ -88,7 +87,7 @@ router.post("/addToCart", async (req, res) => {
         subTotal: parseInt(productDetails.price * quantity),
       };
       cart = await cartRepository.addItem(cartData);
-      // let data = await cart.save();
+      let data = await cart.save();
       res.json(cart);
     }
   } catch (err) {
