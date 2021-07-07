@@ -36,7 +36,7 @@ let loginObj = {
         if ('email' in obj) {
             conObj = { email: obj.email };
         }else{
-            conObj = { phone: obj.phone };
+            conObj = { username: obj.username };
         }
         User.Auth.findOne(conObj, (err, data) => {
             if (err) {
@@ -44,11 +44,11 @@ let loginObj = {
             } else {
                 if (data) {
                     let emailMsg = "", userMsg = "";
-                    if (data.email == obj.email) {
-                        emailMsg = "Email is Already Exist.";
-                    }
                     if (data.username == obj.username) {
                         userMsg = "Username is Already Exist.";
+                    }
+                     else if (data.email == obj.email) {
+                        emailMsg = "Email is Already Exist.";
                     }
                     res.send(emailMsg + " " + userMsg);
                 } else {

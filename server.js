@@ -10,14 +10,11 @@ const app = express();
 const cpus = os.cpus().length;
 
 mongoose
-  .connect(
-    process.env.MONGO_DB,
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
-    }
-  )
+  .connect(process.env.MONGO_DB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+  })
   .then(() => {
     console.log("Database has Connected");
   })
@@ -31,8 +28,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(controller);
-app.use('/', (req,res) => {
-  res.json({message: 'Home Route'});
+app.use("/", (req, res) => {
+  res.json({ message: "Home Route" });
 });
 
 app.listen(process.env.PORT, () => {

@@ -10,8 +10,8 @@ const router = express.Router();
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage });
 
-router.get('/getAllProduct', (req, res) => {
-    Product.Category.find((err, data) => {
+router.get('/getAllProducts', (req, res) => {
+    Product.find((err, data) => {
         if (err) {
             res.send(err.message);
         } else {
@@ -22,7 +22,7 @@ router.get('/getAllProduct', (req, res) => {
 
 router.get('/getProduct', (req, res) => {
     const filter = req.query;
-    Product.Category.find(filter, (err, data) => {
+    Product.find(filter, (err, data) => {
         if (err) {
             res.send(err.message);
         } else {
@@ -35,62 +35,24 @@ router.get('/getProduct', (req, res) => {
 });
 
 
-/* 
-{
-    "userId": "609ab05eabddac700c9e5420",
-    "collab": "609ab05eabddac700c9e5420",
-    "productName": "The Abstract Ocean Bubble 100% Hand Painted Wall Painting (With Outer Floater frame)",
-    "category": "Art",
-    "subCategory": "Prints",
-    "productType": "Photography",
-    "stock": 1,
-    "price": 7999.00,
-    "discPrice": 7100,
-    "quantity": 1,
-    "size": {
-        "height": "36 Inches",
-        "weidth": "48 Inches",
-        "depth": "5 Inches"
-    },
-    "color": "Deep Blue",
-    "rarity": "Limited Edition",
-    "waysToBuy": "Buy Now",
-    "buyFrom": "Artists"
-}
-*/
-router.post('/addProduct', (req, res) => {
-    let model = new Product.Category(req.body);
-    model.save((err, data) => {
-        if (err) {
-            res.send(err.message);
+router.post('/category', (req,res) => {
+    model = new Product(req.body);
+    model.save((err,data)=> {
+        if(err) {
+            res.status(400).json(err.msg)
         } else {
-            let details = {
-                productId: data._id,
-                productDescription: "Painting",
-                packageType: "Carton",
-                location: "Thimpu",
-                originCountry: "Bhutan",
-                shipingCountry: "India",
-            }
-            let model = new Product.Details(details);
-            model.save((err, data) => {
-                if (err) {
-                    res.send(err.message);
-                } else {
-                    res.json({
-                        success: true,
-                        message: 'Product Details Add into database'
-                    });
-                }
+            res.status(200).json({
+                status: true,
+                message: "New Category is added"
             });
         }
     });
-});
+})
 
 router.put('/updateProduct/:id', (req, res) => {
     const id = req.params.id;
     const body = req.body;
-    Product.Category.findOneAndUpdate({ _id: id }, body, (err, data) => {
+    Product.findOneAndUpdate({ _id: id }, body, (err, data) => {
         if (err) {
             res.send(err.message);
         } else {
@@ -101,7 +63,7 @@ router.put('/updateProduct/:id', (req, res) => {
 
 router.delete('/deleteProduct/:id', productMiddleware.deleteProductDetails, productMiddleware.deleteProductReview, (req, res) => {
     const id = req.params.id;
-    Product.Category.findOneAndDelete({ _id: id }, (err, data) => {
+    Product.findOneAndDelete({ _id: id }, (err, data) => {
         if (err) {
             res.send(err.message);
         } else {
@@ -114,33 +76,126 @@ router.delete('/deleteProduct/:id', productMiddleware.deleteProductDetails, prod
 // Product Details
 router.get('/productDetails/:id', (req, res) => {
     const productId = req.params.id;
-    Product.Details.find({ productId: productId }, (err, data) => {
+    Product.find({ productId: productId }, (err, data) => {
         if (err) {
             res.send(err.message);
         } else {
             res.json({
                 success: true,
                 data: data
+
             });
         }
     });
 });
 
-/*
-{
-    productId: 609946fdba377359532041ca,
-    productDescription: "String"
-}
-*/
 router.post('/addProductDetails', (req, res) => {
-    let model = new Product.Details(req.body);
+    let model = new Product(req.body);
     model.save((err, data) => {
         if (err) {
             res.send(err.message);
         } else {
             res.json({
                 success: true,
-                message: 'Product Details Add into database'
+                message: 'Product Details Added into the database'
+            });
+        }
+    });
+});
+
+//Get Product
+router.get('/getProduct', (req,res) => {
+    let opt = req.body.query
+    Product.find(opt, (err,data) => {
+        if (err) {
+            res.status(400).json(err.message)
+        } else {
+            res.status(200).json({
+                status: true,
+                data: data
+            })
+        }
+    });
+});
+
+router.get("/whiteCategory", (req, res) => {
+    let query = req.body;
+    Product.aggregate(
+      [{ $match: { category: "White", ...query } }],
+      (err, data) => {
+        if (err) {
+          res.json(err.message);
+        } else {
+          res.json({
+            status: true,
+            data: data,
+          });
+        }
+      }
+    );
+  });
+
+router.get("/redCategory", (req, res) => {
+    let query = req.body;
+    Product.aggregate(
+      [{ $match: { category: "Red", ...query } }],
+      (err, data) => {
+        if (err) {
+          res.json(err.message);
+        } else {
+          res.json({
+            status: true,
+            data: data,
+          });
+        }
+      }
+    );
+  });
+  
+
+  router.get("/getProductByName", (req, res) => {
+    let filter = req.query.body;
+    Product.aggregate([{ $match: { name: filter } }], (err, data) => {
+      if (err) {
+        res.json(err.message);
+      } else {
+        res.json({
+          success: true,
+          data: data,
+        });
+      }
+    });
+  });
+
+
+  router.get("/seaCategory", (req, res) => {
+    let query = req.body;
+    Product.aggregate(
+      [{ $match: { category: "Sea", ...query } }],
+      (err, data) => {
+        if (err) {
+          res.json(err.message);
+        } else {
+          res.json({
+            status: true,
+            data: data,
+          });
+        }
+      }
+    );
+  });
+  
+  
+router.post('/addProduct', (req,res) => {
+    let model = new Product.Details(req.body);
+
+    model.save((err, data) => {
+        if (err) {
+            res.status(400).send(ree.message);
+        } else {
+            res.json({
+                success: true,
+                message: "Product Added"
             });
         }
     });
@@ -149,11 +204,11 @@ router.post('/addProductDetails', (req, res) => {
 router.put('/updateProductDetails/:id', (req, res) => {
     const id = req.params.id;
     const body = req.body;
-    Product.Details.findOneAndUpdate({ _id: id }, body, (err, data) => {
+    Product.findOneAndUpdate({ _id: id }, body, (err, data) => {
         if (err) {
             res.send(err.message);
         } else {
-            res.json(data);
+            res.status(200).json(data);
         }
     });
 });
@@ -171,63 +226,5 @@ router.post('/uploadProductImage', (req, res) => {
     });
 });
 
-
-router.get('/getVariant', (req, res) => {
-    Product.Variant.findOne((err, data) => {
-        if (err) {
-            res.send(err.message);
-        } else {
-            res.json(data);
-        }
-    });
-});
-
-/* {
-    "colors": [{
-        "color": "Blue",
-        "code": "#0000FF"
-    }, {
-        "color": "Red",
-        "code": "#FF0000"
-    }],
-    "size": ["Height", "Weidth", "Depth"],
-    "shape": ["Triangle", "Rectangular", "Circle"],
-    "pattern": ["Printed", "Canvas", "Oil Painting"],   // Finishing Type, Painting Type
-    "type": ["Handmade", "Images"],
-    "material": ["Acrylic", "Wood And Canvas"],
-    "frame": ["Without Frame", "Wooden", "As per requirement"],
-    "style": ["Modern", "Hanging", "Tabletop", "Floor"],
-    "packingType": ["Box"]
-}
-*/
-router.post('/addVariant', (req, res) => {
-    const obj = req.body;
-    obj.fieldName = "ProductVarient";
-    obj.updatedDate = new Date();
-
-    Product.Variant.findOneAndUpdate({ fieldName: "ProductVarient" }, obj, {
-        new: true,
-        upsert: true // Make this update into an upsert
-    }, (err, data) => {
-        if (err) {
-            res.send(err.message);
-        } else {
-            res.json(data);
-        }
-
-    });
-});
-
-// router.put('/updateVariant/:id', (req, res) => {
-//     const id = req.params.id;
-//     const body = req.body;
-//     Product.Variant.findOneAndUpdate({ _id: id }, body, (err, data) => {
-//         if (err) {
-//             res.send(err.message);
-//         } else {
-//             res.json(data);
-//         }
-//     });
-// });
 
 module.exports = router;
